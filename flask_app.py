@@ -17,7 +17,7 @@ train_logs = []
 training_lock = threading.Lock()
 
 # --------------------------------------------------------------
-#  HEALTH CHECK (Render needs this)
+#  HEALTH CHECK 
 # --------------------------------------------------------------
 @app.route("/health")
 def health():
