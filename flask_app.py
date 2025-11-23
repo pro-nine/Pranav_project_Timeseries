@@ -16,6 +16,13 @@ train_progress = {"VAR": False, "RF": False, "GB": False, "LSTM": False}
 train_logs = []
 training_lock = threading.Lock()
 
+# --------------------------------------------------------------
+#  HEALTH CHECK (Render needs this)
+# --------------------------------------------------------------
+@app.route("/health")
+def health():
+    return "OK", 200
+
 @app.route("/")
 def index():
     return render_template("index.html")
