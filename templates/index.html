@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Forecast Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: #2D3142;
+            color: #FFFFFF;
+            line-height: 1.3;
+        }
+        
+        .header {
+            background: #4F5D75;
+            padding: 0.8rem 1.5rem;
+            border-bottom: 2px solid #EF8354;
+        }
+        
+        .header h1 {
+            font-size: 1.3rem;
+            color: #d9df1b;
+            font-weight: 700;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0.8rem;
+        }
+        
+        .accordion {
+            background: #4F5D75;
+            border: 1px solid #BFC0C0;
+            margin-bottom: 0.4rem;
+        }
+        
+        .accordion-header {
+            padding: 0.6rem 1rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #BFC0C0;
+            transition: background 0.2s;
+        }
+        
+        .accordion-header:hover {
+            background: rgba(239, 131, 84, 0.1);
+        }
+        
+        .accordion-title {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #d9df1b;
+        }
+        
+        .accordion-icon {
+            color: #BFC0C0;
+            font-size: 0.75rem;
+        }
+        
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .accordion-content.active {
+            max-height: 2000px;
+        }
+        
+        .accordion-body {
+            padding: 0.8rem;
+        }
+        
+        .form-group {
+            margin-bottom: 0.6rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.25rem;
+            font-size: 0.8rem;
+            color: #BFC0C0;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.4rem;
+            background: #2D3142;
+            border: 1px solid #BFC0C0;
+            color: #FFFFFF;
+            font-size: 0.8rem;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #EF8354;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            background: #d9df1b;
+            color: #2D3142;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.8rem;
+            font-family: 'Courier New', monospace;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            background: #ff9466;
+        }
+        
+        .btn:disabled {
+            background: #BFC0C0;
+            cursor: not-allowed;
+        }
+        
+        .upload-area {
+            border: 2px dashed #BFC0C0;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        
+        .upload-area:hover {
+            border-color: #EF8354;
+        }
+        
+        .upload-area input {
+            display: none;
+        }
+        
+        .status {
+            padding: 0.4rem;
+            margin: 0.4rem 0;
+            font-size: 0.8rem;
+            display: none;
+        }
+        
+        .status.show { display: block; }
+        .status.success { background: rgba(76, 175, 80, 0.2); color: #4CAF50; }
+        .status.error { background: rgba(244, 67, 54, 0.2); color: #F44336; }
+        .status.info { background: rgba(239, 131, 84, 0.2); color: #EF8354; }
+        
+        .progress-bar {
+            width: 100%;
+            height: 18px;
+            background: #2D3142;
+            margin: 0.4rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #EF8354;
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #2D3142;
+        }
+        
+        .pixel-loader {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            margin: 0.5rem auto;
+            display: none;
+        }
+        
+        .pixel-loader.show { display: block; }
+        
+        .pixel-loader::after {
+            content: "";
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(#EF8354 0 0) 0 0,
+                linear-gradient(#EF8354 0 0) 50% 0,
+                linear-gradient(#EF8354 0 0) 100% 0,
+                linear-gradient(#EF8354 0 0) 0 50%,
+                linear-gradient(#EF8354 0 0) 50% 50%,
+                linear-gradient(#EF8354 0 0) 100% 50%,
+                linear-gradient(#EF8354 0 0) 0 100%,
+                linear-gradient(#EF8354 0 0) 50% 100%,
+                linear-gradient(#EF8354 0 0) 100% 100%;
+            background-size: 8px 8px;
+            background-repeat: no-repeat;
+            animation: pixelate 1.2s linear infinite;
+        }
+        
+        @keyframes pixelate {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        .training-checklist {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 0.4rem;
+            margin: 0.6rem 0;
+        }
+        
+        .checklist-item {
+            background: #2D3142;
+            padding: 0.4rem;
+            text-align: center;
+            border: 1px solid #BFC0C0;
+            font-size: 0.75rem;
+        }
+        
+        .checklist-item.complete {
+            border-color: #4CAF50;
+            color: #4CAF50;
+        }
+        
+        .checklist-item.training {
+            border-color: #EF8354;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .logs-box {
+            background: #2D3142;
+            padding: 0.4rem;
+            font-size: 0.7rem;
+            color: #BFC0C0;
+            max-height: 80px;
+            overflow-y: auto;
+            margin: 0.4rem 0;
+        }
+        
+        .log-entry {
+            margin-bottom: 0.15rem;
+        }
+        
+        .plot-container {
+            background: #2D3142;
+            padding: 0.4rem;
+            min-height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #BFC0C0;
+            font-size: 0.8rem;
+        }
+        
+        .plot-container img {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.6rem;
+        }
+        
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.6rem;
+        }
+        
+        .note {
+            background: rgba(239, 131, 84, 0.1);
+            padding: 0.4rem;
+            margin: 0.4rem 0;
+            font-size: 0.75rem;
+            color: #EF8354;
+            border-left: 3px solid #EF8354;
+        }
+        
+        @media (max-width: 768px) {
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>SOLAR FORECAST DASHBOARD</h1>
+    </div>
+    
+    <div class="container">
+        <!-- 1. Upload Data -->
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                <span class="accordion-title">1. UPLOAD DATA</span>
+                <span class="accordion-icon">▼</span>
+            </div>
+            <div class="accordion-content active">
+                <div class="accordion-body">
+                    <div class="upload-area" onclick="document.getElementById('csvFile').click()">
+                        <input type="file" id="csvFile" accept=".csv">
+                        <div>Click to upload CSV</div>
+                        <div id="fileName" style="color: #EF8354; margin-top: 0.5rem;"></div>
+                    </div>
+                    <div class="status" id="uploadStatus"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 2. Model Configuration -->
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                <span class="accordion-title">2. MODEL CONFIGURATION</span>
+                <span class="accordion-icon">▼</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-body">
+                    <div class="form-group">
+                        <label>Select Models to Train:</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="modelVAR" checked>
+                                <label for="modelVAR">VAR</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="modelRF" checked>
+                                <label for="modelRF">Random Forest</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="modelGB" checked>
+                                <label for="modelGB">Gradient Boosting</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="modelLSTM" checked>
+                                <label for="modelLSTM">LSTM</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Training End Date</label>
+                            <input type="text" id="trainEnd" value="2017-11-30 10:00:00">
+                        </div>
+                        <div class="form-group">
+                            <label>Test End Date</label>
+                            <input type="text" id="testEnd" value="2017-12-31 23:00:00">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 3. Training -->
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                <span class="accordion-title">3. TRAINING</span>
+                <span class="accordion-icon">▼</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-body">
+                    <div class="note">Wait until selected model(s) training is completed.</div>
+                    <button class="btn" onclick="startTraining()">Start Training</button>
+                    <div class="pixel-loader" id="trainingLoader"></div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="trainingProgress">0%</div>
+                    </div>
+                    <div class="training-checklist">
+                        <div class="checklist-item" id="checkVAR">VAR</div>
+                        <div class="checklist-item" id="checkRF">RF</div>
+                        <div class="checklist-item" id="checkGB">GB</div>
+                        <div class="checklist-item" id="checkLSTM">LSTM</div>
+                    </div>
+                    <div class="logs-box" id="trainingLogs"></div>
+                    <div class="status" id="trainingStatus"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 4. Data Overview -->
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                <span class="accordion-title">4. DATA OVERVIEW</span>
+                <span class="accordion-icon">▼</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-body">
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Target</label>
+                            <select id="overviewTarget">
+                                <option value="GHI">GHI</option>
+                                <option value="DHI">DHI</option>
+                                <option value="DNI">DNI</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>View Type</label>
+                            <select id="overviewType">
+                                <option value="raw">Raw</option>
+                                <option value="yearly">Yearly Cycle</option>
+                                <option value="daily">Daily Average</option>
+                                <option value="monthly">Monthly Average</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="fetchDataOverview()">Show Overview</button>
+                    <div class="plot-container" id="plotOverview">Upload data to view overview</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 5. Forecast Viewer -->
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                <span class="accordion-title">5. FORECAST VIEWER</span>
+                <span class="accordion-icon">▼</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-body">
+                    <div class="grid-3">
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input type="date" id="forecastDate" value="2017-11-30">
+                        </div>
+                        <div class="form-group">
+                            <label>Window</label>
+                            <select id="forecastWindow">
+                                <option value="1">1 hour</option>
+                                <option value="2">2 hours</option>
+                                <option value="6">6 hours</option>
+                                <option value="12">12 hours</option>
+                                <option value="24">24 hours</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Target</label>
+                            <select id="forecastTarget">
+                                <option value="GHI">GHI</option>
+                                <option value="DHI">DHI</option>
+                                <option value="DNI">DNI</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="generateForecast()">Generate Forecast</button>
+                    <div class="plot-container" id="plotForecast">Complete training to generate forecast</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 6. GHI-DHI-DNI Comparison -->
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                <span class="accordion-title">6. GHI–DHI–DNI COMPARISON</span>
+                <span class="accordion-icon">▼</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-body">
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input type="date" id="comparisonDate" value="2017-11-30">
+                        </div>
+                        <div class="form-group">
+                            <label>Target</label>
+                            <select id="comparisonTarget">
+                                <option value="GHI">GHI</option>
+                                <option value="DHI">DHI</option>
+                                <option value="DNI">DNI</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="fetchComparison()">Show Comparison</button>
+                    <div class="plot-container" id="plotComparison">Complete training to compare models</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 7. Training Summary -->
+        <div class="accordion">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                <span class="accordion-title">7. TRAINING SUMMARY</span>
+                <span class="accordion-icon">▼</span>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-body">
+                    <button class="btn" onclick="fetchPerformance()">Show Performance</button>
+                    <div class="plot-container" id="plotPerformance">Complete training to view metrics</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let trainingInterval = null;
+        
+        function toggleAccordion(header) {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('.accordion-icon');
+            content.classList.toggle('active');
+            icon.textContent = content.classList.contains('active') ? '▼' : '▶';
+        }
+        
+        document.getElementById('csvFile').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            document.getElementById('fileName').textContent = file.name;
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                showStatus('uploadStatus', data.success ? data.message : data.error, data.success ? 'success' : 'error');
+            } catch (error) {
+                showStatus('uploadStatus', 'Upload failed: ' + error.message, 'error');
+            }
+        });
+        
+        async function startTraining() {
+            const models = [];
+            if (document.getElementById('modelVAR').checked) models.push('VAR');
+            if (document.getElementById('modelRF').checked) models.push('RF');
+            if (document.getElementById('modelGB').checked) models.push('GB');
+            if (document.getElementById('modelLSTM').checked) models.push('LSTM');
+            
+            if (models.length === 0) {
+                showStatus('trainingStatus', 'Select at least one model', 'error');
+                return;
+            }
+            
+            document.getElementById('trainingLoader').classList.add('show');
+            document.getElementById('trainingLogs').innerHTML = '<div class="log-entry">Training started...</div>';
+            
+            ['VAR', 'RF', 'GB', 'LSTM'].forEach(m => {
+                const elem = document.getElementById('check' + m);
+                elem.className = 'checklist-item';
+                elem.textContent = m;
+            });
+            
+            startProgressPolling();
+            
+            try {
+                const response = await fetch('/api/train', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        models: models,
+                        trainEnd: document.getElementById('trainEnd').value,
+                        testEnd: document.getElementById('testEnd').value
+                    })
+                });
+                const data = await response.json();
+                document.getElementById('trainingLoader').classList.remove('show');
+                showStatus('trainingStatus', data.success ? 'Training Complete' : data.error, data.success ? 'success' : 'error');
+                if (trainingInterval) clearInterval(trainingInterval);
+            } catch (error) {
+                document.getElementById('trainingLoader').classList.remove('show');
+                showStatus('trainingStatus', 'Training failed: ' + error.message, 'error');
+                if (trainingInterval) clearInterval(trainingInterval);
+            }
+        }
+        
+        function startProgressPolling() {
+            trainingInterval = setInterval(async () => {
+                try {
+                    const response = await fetch('/api/train_status');
+                    const data = await response.json();
+                    
+                    let completed = 0;
+                    Object.entries(data.progress).forEach(([model, done]) => {
+                        const elem = document.getElementById('check' + model);
+                        if (done) {
+                            elem.className = 'checklist-item complete';
+                            elem.textContent = model;
+                            completed++;
+                        } else {
+                            elem.className = 'checklist-item training';
+                        }
+                    });
+                    
+                    const progress = (completed / 4) * 100;
+                    const progressFill = document.getElementById('trainingProgress');
+                    progressFill.style.width = progress + '%';
+                    progressFill.textContent = Math.round(progress) + '%';
+                    
+                    const logsRes = await fetch('/api/train_logs');
+                    const logsData = await logsRes.json();
+                    if (logsData.logs && logsData.logs.length > 0) {
+                        document.getElementById('trainingLogs').innerHTML = logsData.logs.map(l => 
+                            `<div class="log-entry">${l}</div>`
+                        ).join('');
+                    }
+                } catch (error) {
+                    console.error('Status poll failed:', error);
+                }
+            }, 2000);
+        }
+        
+        async function fetchDataOverview() {
+            const target = document.getElementById('overviewTarget').value;
+            const type = document.getElementById('overviewType').value;
+            
+            document.getElementById('plotOverview').innerHTML = 'Loading...';
+            
+            try {
+                const response = await fetch(`/api/data_overview?target=${target}&type=${type}`);
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('plotOverview').innerHTML = `<img src="data:image/png;base64,${data.image}">`;
+                } else {
+                    document.getElementById('plotOverview').innerHTML = data.error;
+                }
+            } catch (error) {
+                document.getElementById('plotOverview').innerHTML = 'Error: ' + error.message;
+            }
+        }
+        
+        async function generateForecast() {
+            const target = document.getElementById('forecastTarget').value;
+            const date = document.getElementById('forecastDate').value;
+            const window = document.getElementById('forecastWindow').value;
+            
+            document.getElementById('plotForecast').innerHTML = 'Loading...';
+            
+            try {
+                const response = await fetch(`/api/forecast?target=${target}&date=${date}&window=${window}`);
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('plotForecast').innerHTML = `<img src="data:image/png;base64,${data.image}">`;
+                } else {
+                    document.getElementById('plotForecast').innerHTML = data.error;
+                }
+            } catch (error) {
+                document.getElementById('plotForecast').innerHTML = 'Error: ' + error.message;
+            }
+        }
+        
+        async function fetchComparison() {
+            const target = document.getElementById('comparisonTarget').value;
+            const date = document.getElementById('comparisonDate').value;
+            
+            document.getElementById('plotComparison').innerHTML = 'Loading...';
+            
+            try {
+                const response = await fetch(`/api/model_comparison?target=${target}&date=${date}`);
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('plotComparison').innerHTML = `<img src="data:image/png;base64,${data.image}">`;
+                } else {
+                    document.getElementById('plotComparison').innerHTML = data.error;
+                }
+            } catch (error) {
+                document.getElementById('plotComparison').innerHTML = 'Error: ' + error.message;
+            }
+        }
+        
+        async function fetchPerformance() {
+            document.getElementById('plotPerformance').innerHTML = 'Loading...';
+            
+            try {
+                const response = await fetch('/api/get_performance_comparison');
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('plotPerformance').innerHTML = `<img src="data:image/png;base64,${data.image}">`;
+                } else {
+                    document.getElementById('plotPerformance').innerHTML = data.error;
+                }
+            } catch (error) {
+                document.getElementById('plotPerformance').innerHTML = 'Error: ' + error.message;
+            }
+        }
+        
+        function showStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `status ${type} show`;
+            setTimeout(() => element.classList.remove('show'), 5000);
+        }
+    </script>
+    <!-- =======================
+     CUSTOM FOOTER SECTION
+    ======================= -->
+    <style>
+        .footer {
+            background-color: #2D3142;
+            padding: 20px 0;
+            margin-top: 60px;
+            text-align: center;
+            color: #BFC0C0;
+            font-size: 14px;
+            border-top: 1px solid #4F5D75;
+            width: 100%;
+        }
+
+        /* Minimal pixel-art icons (CSS only) */
+        .pixel-art-container {
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .pixel-sun, .pixel-cloud {
+            width: 22px;
+            height: 22px;
+            image-rendering: pixelated;
+        }
+
+        .pixel-sun {
+            background: radial-gradient(#d9df1b 40%, #4F5D75 42%);
+        }
+
+        .pixel-cloud {
+            background: linear-gradient(#FFFFFF 50%, #BFC0C0 50%);
+        }
+
+        .footer a {
+            color: #d9df1b;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+
+    <footer class="footer">
+        <div class="pixel-art-container">
+            <div class="pixel-sun"></div>
+            <div class="pixel-cloud"></div>
+        </div>
+
+        <div>
+            To know more about data processing, see the 
+            <a href="https://colab.research.google.com/drive/1Qi1ARL04-3nZ__Uy3vhhLI_GqmkFg2Dv?usp=sharing" target="_blank">notebook</a>.
+        </div>
+
+        <div style="margin-top: 6px;">
+            Always verify the **year** of your CSV file before entering any date input.
+        </div>
+
+        <div style="margin-top: 6px;">
+            Download your own dataset from the NSRDB website and analyze it using this tool.
+        </div>
+    </footer>
+
+</body>
+</html>
