@@ -50,7 +50,6 @@ def upload_file():
 # --------------------------------------------------------------
 #  TRAIN
 # --------------------------------------------------------------
-# (In your flask_app.py file, replace the existing /api/train function)
 
 @app.route("/api/train", methods=["POST"])
 def train_models():
