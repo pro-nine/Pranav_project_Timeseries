@@ -50,66 +50,110 @@ def upload_file():
 # --------------------------------------------------------------
 #  TRAIN
 # --------------------------------------------------------------
+# (In your flask_app.py file, replace the existing /api/train function)
+
 @app.route("/api/train", methods=["POST"])
 def train_models():
-    global pipeline, train_progress, train_logs
+    global pipeline
+    
+    # 1. Prevent multiple training runs
+    if training_lock.locked():
+        return jsonify({"error": "Training is already in progress"}), 409
+        
+    try:
+        # Define the function that contains the long-running ML process
+        def run_training():
+            global pipeline
+            
+            try:
+                # Reset progress flags and logs
+                for key in train_progress:
+                    train_progress[key] = False
+                train_logs.clear()
+                train_logs.append("Training initiated in background...")
+                
+                filepath = os.path.join(app.config["UPLOAD_FOLDER"], "data.csv")
+                
+                if not os.path.exists(filepath):
+                    train_logs.append("ERROR: Data file not found.")
+                    return
 
-    with training_lock:
-        try:
-            data = request.json
-            selected_models = data.get("models", ["VAR", "RF", "GB", "LSTM"])
-            train_end = data.get("trainEnd", "2017-11-30 10:00:00")
-            test_end = data.get("testEnd", "2017-12-31 23:00:00")
+                # --- START OF LONG-RUNNING LOGIC ---
+                pipeline = SolarForecastPipeline(filepath)
+                train_logs.append("Pipeline initialized and data loading...")
 
-            filepath = os.path.join(app.config["UPLOAD_FOLDER"], "data.csv")
-            if not os.path.exists(filepath):
-                return jsonify({"error": "Upload file first"}), 400
-
-            # Reset progress
-            train_progress = {"VAR": False, "RF": False, "GB": False, "LSTM": False}
-            train_logs.clear()
-
-            pipeline = SolarForecastPipeline(filepath)
-            train_logs.append("Data loaded")
-
-            pipeline.load_and_inspect_data()
-            pipeline.preprocess_data(correlation_threshold=0.7)
-            pipeline.split_data(train_end=train_end, test_end=test_end)
-            pipeline.prepare_ml_data(test_size=0.2, random_state=42)
-
-            if "VAR" in selected_models:
+                pipeline.load_and_inspect_data()
+                pipeline.preprocess_data(correlation_threshold=0.7)
+                pipeline.split_data(train_end='2017-11-30 10:00:00', test_end='2017-12-31 23:00:00')
+                pipeline.prepare_ml_data(test_size=0.2, random_state=42)
+                train_logs.append("Data preprocessed and prepared.")
+                
+                # VAR Model
                 pipeline.train_var_model(max_lag=50)
                 train_progress["VAR"] = True
-                train_logs.append("VAR done")
+                train_logs.append("VAR model trained.")
+                
+                # RF & GB Models
+                pipeline.train_rf_gb_models(use_tuned=True)
+                train_progress["RF"] = True
+                train_progress["GB"] = True
+                train_logs.append("RF and GB models trained.")
 
-            if "RF" in selected_models or "GB" in selected_models:
-                pipeline.train_rf_gb_models(use_tuned=True, targets=["GHI", "DHI", "DNI"])
-                if "RF" in selected_models:
-                    train_progress["RF"] = True
-                if "GB" in selected_models:
-                    train_progress["GB"] = True
-                train_logs.append("RF/GB done")
-
-            if "LSTM" in selected_models:
-                pipeline.train_lstm_model(epochs=80, batch_size=48, patience=5, targets=["GHI", "DHI", "DNI"])
+                # LSTM Model
+                pipeline.train_lstm_model(epochs=80, batch_size=48, patience=5)
                 train_progress["LSTM"] = True
-                train_logs.append("LSTM done")
+                train_logs.append("LSTM model trained.")
 
-            pipeline.generate_forecasts()
-            pipeline.evaluate_models()
-            train_logs.append("Forecast ready")
+                # Final steps
+                pipeline.generate_forecasts()
+                pipeline.evaluate_models()
+                train_logs.append("All forecasts generated and evaluated. Process complete.")
+                # --- END OF LONG-RUNNING LOGIC ---
 
-            return jsonify({"success": True})
-        except Exception as e:
-            train_logs.append(f"Error: {str(e)}")
-            return jsonify({"error": str(e)}), 500
+            except Exception as e:
+                # Log any error that happens during training
+                error_msg = f"FATAL TRAINING ERROR: {str(e)}"
+                train_logs.append(error_msg)
+            finally:
+                # Release the lock regardless of success or failure
+                training_lock.release()
+
+        # 2. Acquire lock (to show status is 'running') and start thread immediately
+        training_lock.acquire()
+        thread = threading.Thread(target=run_training)
+        thread.start()
+
+        # 3. Return success IMMEDIATELY (prevents Gunicorn timeout)
+        return jsonify({"success": True, "message": "Training started in background. Poll /api/train_status for progress."})
+
+    except Exception as e:
+        # Handle exceptions that occur before the thread is started (e.g., file upload path error)
+        if training_lock.locked():
+             training_lock.release()
+        return jsonify({"error": str(e)}), 500
 
 # --------------------------------------------------------------
 #  TRAIN STATUS + LOGS
 # --------------------------------------------------------------
 @app.route("/api/train_status", methods=["GET"])
 def train_status():
-    return jsonify({"progress": train_progress})
+    if training_lock.locked():
+        status = "running"
+    elif any(train_progress.values()):
+        # Lock is released AND models ran: SUCCESS
+        status = "completed"
+    elif any("ERROR" in log.upper() for log in train_logs):
+        # Lock is released AND logs show an error: FAILURE
+        status = "failed"
+    else:
+        # Lock is released, no progress, no clear error in logs: IDLE/Not Started
+        status = "idle" 
+        
+    return jsonify({
+        "status": status,
+        "progress": train_progress,
+        "logs": train_logs
+    })
 
 @app.route("/api/train_logs", methods=["GET"])
 def get_logs():
