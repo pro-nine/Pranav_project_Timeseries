@@ -106,6 +106,8 @@ def train_models():
                 # Final steps
                 pipeline.generate_forecasts()
                 pipeline.evaluate_models()
+                pipeline.save_models()
+                train_logs.append("Models serialized successfully.")
                 train_logs.append("All forecasts generated and evaluated. Process complete.")
                 # --- END OF LONG-RUNNING LOGIC ---
 
