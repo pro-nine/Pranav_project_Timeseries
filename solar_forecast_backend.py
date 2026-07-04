@@ -14,6 +14,8 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout
 from tensorflow.keras.callbacks import EarlyStopping
 from datetime import datetime, timedelta
+import joblib
+import os
 from io import BytesIO
 import base64
 
@@ -362,6 +364,37 @@ class SolarForecastPipeline:
                         }
         
         return self.metrics
+
+    def save_models(self, save_dir="models"):
+        os.makedirs(save_dir, exist_ok=True)
+    
+        # Save scalers
+        joblib.dump(self.scaler_nts,
+                    os.path.join(save_dir, "scaler_nts.pkl"))
+    
+        joblib.dump(self.scaler_ts,
+                    os.path.join(save_dir, "scaler_ts.pkl"))
+    
+        # Save Random Forest models
+        for target, model in self.rf_models.items():
+            joblib.dump(
+                model,
+                os.path.join(save_dir, f"rf_{target}.pkl")
+            )
+    
+        # Save Gradient Boosting models
+        for target, model in self.gb_models.items():
+            joblib.dump(
+                model,
+                os.path.join(save_dir, f"gb_{target}.pkl")
+            )
+    
+        # Save LSTM models
+        for target, model in self.lstm_models.items():
+            model.save(
+                os.path.join(save_dir, f"lstm_{target}.keras")
+            )
+
     
     def _fig_to_base64(self, fig):
         buffer = BytesIO()
