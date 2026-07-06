@@ -1,785 +1,579 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solar Forecast Dashboard</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Courier New', monospace;
-            background: #2D3142;
-            color: #FFFFFF;
-            line-height: 1.3;
-        }
-        
-        .header {
-            background: #4F5D75;
-            padding: 0.8rem 1.5rem;
-            border-bottom: 2px solid #EF8354;
-        }
-        
-        .header h1 {
-            font-size: 1.3rem;
-            color: #d9df1b;
-            font-weight: 700;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0.8rem;
-        }
-        
-        .accordion {
-            background: #4F5D75;
-            border: 1px solid #BFC0C0;
-            margin-bottom: 0.4rem;
-        }
-        
-        .accordion-header {
-            padding: 0.6rem 1rem;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #BFC0C0;
-            transition: background 0.2s;
-        }
-        
-        .accordion-header:hover {
-            background: rgba(239, 131, 84, 0.1);
-        }
-        
-        .accordion-title {
-            font-weight: 700;
-            font-size: 0.9rem;
-            color: #d9df1b;
-        }
-        
-        .accordion-icon {
-            color: #BFC0C0;
-            font-size: 0.75rem;
-        }
-        
-        .accordion-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-        
-        .accordion-content.active {
-            max-height: 2000px;
-        }
-        
-        .accordion-body {
-            padding: 0.8rem;
-        }
-        
-        .form-group {
-            margin-bottom: 0.6rem;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 0.25rem;
-            font-size: 0.8rem;
-            color: #BFC0C0;
-        }
-        
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 0.4rem;
-            background: #2D3142;
-            border: 1px solid #BFC0C0;
-            color: #FFFFFF;
-            font-size: 0.8rem;
-            font-family: 'Courier New', monospace;
-        }
-        
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #EF8354;
-        }
-        
-        .checkbox-group {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-        
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .checkbox-item input[type="checkbox"] {
-            width: auto;
-        }
-        
-        .btn {
-            padding: 0.5rem 1rem;
-            background: #d9df1b;
-            color: #2D3142;
-            border: none;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 0.8rem;
-            font-family: 'Courier New', monospace;
-            transition: all 0.2s;
-        }
-        
-        .btn:hover {
-            background: #ff9466;
-        }
-        
-        .btn:disabled {
-            background: #BFC0C0;
-            cursor: not-allowed;
-        }
-        
-        .upload-area {
-            border: 2px dashed #BFC0C0;
-            padding: 1rem;
-            text-align: center;
-            cursor: pointer;
-            transition: border-color 0.2s;
-        }
-        
-        .upload-area:hover {
-            border-color: #EF8354;
-        }
-        
-        .upload-area input {
-            display: none;
-        }
-        
-        .status {
-            padding: 0.4rem;
-            margin: 0.4rem 0;
-            font-size: 0.8rem;
-            display: none;
-        }
-        
-        .status.show { display: block; }
-        .status.success { background: rgba(76, 175, 80, 0.2); color: #4CAF50; }
-        .status.error { background: rgba(244, 67, 54, 0.2); color: #F44336; }
-        .status.info { background: rgba(239, 131, 84, 0.2); color: #EF8354; }
-        
-        .progress-bar {
-            width: 100%;
-            height: 18px;
-            background: #2D3142;
-            margin: 0.4rem 0;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background: #EF8354;
-            width: 0%;
-            transition: width 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.7rem;
-            font-weight: 700;
-            color: #2D3142;
-        }
-        
-        .pixel-loader {
-            display: inline-block;
-            width: 30px;
-            height: 30px;
-            margin: 0.5rem auto;
-            display: none;
-        }
-        
-        .pixel-loader.show { display: block; }
-        
-        .pixel-loader::after {
-            content: "";
-            display: block;
-            width: 100%;
-            height: 100%;
-            background: 
-                linear-gradient(#EF8354 0 0) 0 0,
-                linear-gradient(#EF8354 0 0) 50% 0,
-                linear-gradient(#EF8354 0 0) 100% 0,
-                linear-gradient(#EF8354 0 0) 0 50%,
-                linear-gradient(#EF8354 0 0) 50% 50%,
-                linear-gradient(#EF8354 0 0) 100% 50%,
-                linear-gradient(#EF8354 0 0) 0 100%,
-                linear-gradient(#EF8354 0 0) 50% 100%,
-                linear-gradient(#EF8354 0 0) 100% 100%;
-            background-size: 8px 8px;
-            background-repeat: no-repeat;
-            animation: pixelate 1.2s linear infinite;
-        }
-        
-        @keyframes pixelate {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-        
-        .training-checklist {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-            gap: 0.4rem;
-            margin: 0.6rem 0;
-        }
-        
-        .checklist-item {
-            background: #2D3142;
-            padding: 0.4rem;
-            text-align: center;
-            border: 1px solid #BFC0C0;
-            font-size: 0.75rem;
-        }
-        
-        .checklist-item.complete {
-            border-color: #4CAF50;
-            color: #4CAF50;
-        }
-        
-        .checklist-item.training {
-            border-color: #EF8354;
-            animation: pulse 1s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
-        .logs-box {
-            background: #2D3142;
-            padding: 0.4rem;
-            font-size: 0.7rem;
-            color: #BFC0C0;
-            max-height: 80px;
-            overflow-y: auto;
-            margin: 0.4rem 0;
-        }
-        
-        .log-entry {
-            margin-bottom: 0.15rem;
-        }
-        
-        .plot-container {
-            background: #2D3142;
-            padding: 0.4rem;
-            min-height: 250px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #BFC0C0;
-            font-size: 0.8rem;
-        }
-        
-        .plot-container img {
-            max-width: 100%;
-            height: auto;
-        }
-        
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.6rem;
-        }
-        
-        .grid-3 {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.6rem;
-        }
-        
-        .note {
-            background: rgba(239, 131, 84, 0.1);
-            padding: 0.4rem;
-            margin: 0.4rem 0;
-            font-size: 0.75rem;
-            color: #EF8354;
-            border-left: 3px solid #EF8354;
-        }
-        
-        @media (max-width: 768px) {
-            .grid-2, .grid-3 {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solar Forecast Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #1A73E8; --red: #EA4335; --yellow: #FBBC05; --green: #34A853;
+    --ink: #202124; --ink-soft: #5F6368; --line: #DADCE0;
+    --surface: #F8F9FA; --surface-hover: #F1F3F4; --white: #FFFFFF;
+    --radius: 12px;
+    --shadow-1: 0 1px 2px rgba(60,64,67,.15), 0 1px 3px rgba(60,64,67,.1);
+    --shadow-2: 0 1px 3px rgba(60,64,67,.15), 0 4px 8px rgba(60,64,67,.12);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Roboto', Arial, sans-serif; background: var(--surface); color: var(--ink); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  code, .mono { font-family: 'Roboto Mono', ui-monospace, monospace; }
+
+  .topbar { position: sticky; top: 0; z-index: 30; background: var(--white); border-bottom: 1px solid var(--line); height: 64px; display: flex; align-items: center; padding: 0 24px; }
+  .topbar-inner { width: 100%; max-width: 1040px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-mark { width: 22px; height: 22px; position: relative; flex-shrink: 0; }
+  .brand-mark span { position: absolute; width: 10px; height: 10px; border-radius: 50%; }
+  .brand-mark span:nth-child(1) { background: var(--blue); top: 0; left: 0; }
+  .brand-mark span:nth-child(2) { background: var(--red); top: 0; right: 0; }
+  .brand-mark span:nth-child(3) { background: var(--yellow); bottom: 0; left: 0; }
+  .brand-mark span:nth-child(4) { background: var(--green); bottom: 0; right: 0; }
+  .brand h1 { font-size: 20px; font-weight: 500; letter-spacing: -.1px; }
+  .status-pill { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-soft); background: var(--surface); border: 1px solid var(--line); border-radius: 100px; padding: 6px 14px 6px 10px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line); flex-shrink: 0; }
+  .status-dot.on { background: var(--green); }
+  .status-dot.busy { background: var(--yellow); animation: pulse 1s infinite; }
+  .status-dot.off { background: var(--ink-soft); }
+
+  .container { max-width: 1040px; margin: 0 auto; padding: 28px 24px 80px; }
+
+  .quickstats { display: none; background: var(--white); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-1); margin-bottom: 20px; overflow: hidden; }
+  .quickstats.show { display: block; }
+  .quickstats-head { padding: 14px 20px; border-bottom: 1px solid var(--line); font-size: 14px; font-weight: 500; }
+  .quickstats-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .quickstats-table th { text-align: left; font-weight: 500; color: var(--ink-soft); padding: 10px 20px; border-bottom: 1px solid var(--line); }
+  .quickstats-table td { padding: 8px 20px; border-bottom: 1px solid #F1F3F4; }
+  .quickstats-table tr:last-child td { border-bottom: none; }
+  .quickstats-table tr:hover td { background: var(--surface-hover); }
+  .model-chip { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; }
+  .model-chip::before { content: ''; width: 8px; height: 8px; border-radius: 50%; }
+  .model-chip.VAR::before  { background: var(--red); }
+  .model-chip.RF::before   { background: var(--green); }
+  .model-chip.GB::before   { background: var(--blue); }
+  .model-chip.LSTM::before { background: var(--yellow); }
+
+  /* ---------- Pipeline canvas (the DAG) ---------- */
+  .canvas-card {
+    background: var(--white); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow-1); margin-bottom: 20px; padding: 20px 20px 8px;
+  }
+  .canvas-label { font-size: 12px; font-weight: 500; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 12px; }
+  .dag-wrap { position: relative; width: 100%; }
+  .dag-wrap.desktop { aspect-ratio: 900 / 400; display: block; }
+  .dag-wrap.mobile { aspect-ratio: 400 / 860; display: none; }
+  @media (max-width: 760px) {
+    .dag-wrap.desktop { display: none; }
+    .dag-wrap.mobile { display: block; }
+  }
+  .dag-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+  .dag-svg path { fill: none; stroke: var(--line); stroke-width: 2; transition: stroke .2s ease; }
+  .dag-svg path.lit { stroke: var(--blue); }
+
+  .node {
+    position: absolute; transform: translate(-50%, -50%);
+    background: var(--white); border: 1.5px solid var(--line); border-radius: 10px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer; text-align: center; padding: 6px 10px;
+    transition: border-color .15s ease, box-shadow .15s ease, transform .1s ease;
+    font-size: 12.5px; font-weight: 500; color: var(--ink-soft);
+  }
+  .node:hover { box-shadow: var(--shadow-1); }
+  .node:active { transform: translate(-50%, -50%) scale(.97); }
+  .node.active { border-color: var(--blue); color: var(--blue); box-shadow: 0 0 0 3px rgba(26,115,232,.12); background: #F5F9FE; }
+  .node .node-sub { font-size: 10.5px; font-weight: 400; color: var(--ink-soft); margin-top: 2px; }
+
+  .node.train-node { flex-direction: column; gap: 4px; padding: 10px; }
+  .train-chips { display: flex; gap: 5px; margin-top: 4px; flex-wrap: wrap; justify-content: center; }
+  .train-chip { display: flex; align-items: center; gap: 4px; font-size: 10.5px; padding: 2px 7px; border-radius: 100px; background: var(--surface); border: 1px solid var(--line); }
+  .train-chip::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
+  .train-chip.VAR::before  { background: var(--red); }
+  .train-chip.RF::before   { background: var(--green); }
+  .train-chip.GB::before   { background: var(--blue); }
+  .train-chip.LSTM::before { background: var(--yellow); }
+  .train-chip.done { border-color: var(--green); color: #137333; }
+  .train-chip.busy { border-color: var(--yellow); color: #B06000; animation: pulse 1.2s infinite; }
+
+  /* ---------- Stage detail panel ---------- */
+  .panel-card {
+    background: var(--white); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow-1); overflow: hidden;
+  }
+  .panel-head { padding: 18px 24px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; }
+  .panel-head-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--blue); }
+  .panel-head h2 { font-size: 16px; font-weight: 500; }
+  .panel-body { padding: 20px 24px 24px; }
+  .stage-panel { display: none; animation: fadein .25s ease; }
+  .stage-panel.active { display: block; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 500; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .3px; }
+  .form-group input, .form-group select {
+    width: 100%; padding: 10px 12px; background: var(--white); border: 1px solid var(--line);
+    border-radius: 8px; color: var(--ink); font-size: 14px; font-family: 'Roboto', sans-serif;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(26,115,232,.15); }
+
+  .checkbox-group { display: flex; gap: 18px; flex-wrap: wrap; }
+  .checkbox-item { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+  .checkbox-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--blue); }
+
+  .btn { padding: 10px 22px; background: var(--blue); color: var(--white); border: none; border-radius: 100px; cursor: pointer; font-weight: 500; font-size: 14px; font-family: 'Roboto', sans-serif; transition: background .15s ease, transform .1s ease, box-shadow .15s ease; box-shadow: var(--shadow-1); }
+  .btn:hover { background: #1765CC; box-shadow: var(--shadow-2); }
+  .btn:active { transform: scale(.97); }
+  .btn:disabled { background: var(--line); color: var(--ink-soft); cursor: not-allowed; box-shadow: none; }
+
+  .upload-area { border: 2px dashed var(--line); border-radius: var(--radius); padding: 28px; text-align: center; cursor: pointer; transition: border-color .15s ease, background .15s ease; }
+  .upload-area:hover { border-color: var(--blue); background: rgba(26,115,232,.03); }
+  .upload-area input { display: none; }
+  .upload-area .upload-title { font-size: 14px; font-weight: 500; }
+  .upload-area .upload-sub { font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
+
+  .status { padding: 10px 14px; margin: 10px 0; font-size: 13px; border-radius: 8px; display: none; }
+  .status.show { display: block; }
+  .status.success { background: #E6F4EA; color: #137333; }
+  .status.error   { background: #FCE8E6; color: #C5221F; }
+  .status.info    { background: #E8F0FE; color: #1967D2; }
+
+  .progress-bar { width: 100%; height: 6px; background: var(--surface); border-radius: 100px; margin: 14px 0; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--blue); width: 0%; border-radius: 100px; transition: width .3s ease; }
+
+  .dot-loader { display: none; gap: 6px; align-items: center; margin: 10px 0; }
+  .dot-loader.show { display: flex; }
+  .dot-loader span { width: 8px; height: 8px; border-radius: 50%; animation: bounce 1.1s infinite ease-in-out; }
+  .dot-loader span:nth-child(1) { background: var(--blue); animation-delay: 0s; }
+  .dot-loader span:nth-child(2) { background: var(--red); animation-delay: .12s; }
+  .dot-loader span:nth-child(3) { background: var(--yellow); animation-delay: .24s; }
+  .dot-loader span:nth-child(4) { background: var(--green); animation-delay: .36s; }
+  @keyframes bounce { 0%, 80%, 100% { transform: scale(.6); opacity: .5; } 40% { transform: scale(1); opacity: 1; } }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+
+  .logs-box { background: var(--ink); color: #E8EAED; border-radius: 8px; padding: 12px 14px; font-size: 12px; font-family: 'Roboto Mono', monospace; max-height: 120px; overflow-y: auto; margin: 12px 0; }
+  .log-entry { margin-bottom: 4px; opacity: .9; }
+  .log-entry::before { content: '›  '; color: #8AB4F8; }
+
+  .plot-container { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--line); min-height: 240px; display: flex; align-items: center; justify-content: center; color: var(--ink-soft); font-size: 13px; padding: 12px; text-align: center; }
+  .plot-container img { max-width: 100%; height: auto; border-radius: 8px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .note { background: #E8F0FE; color: #1967D2; border-radius: 8px; padding: 10px 14px; margin: 0 0 14px; font-size: 13px; }
+
+  @media (max-width: 768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } .container { padding: 20px 16px 60px; } }
+
+  .footer { max-width: 1040px; margin: 40px auto 0; padding: 24px; color: var(--ink-soft); font-size: 13px; text-align: center; border-top: 1px solid var(--line); }
+  .footer a { color: var(--blue); text-decoration: none; font-weight: 500; }
+  .footer a:hover { text-decoration: underline; }
+  .footer-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 12px; }
+  .footer-dots span { width: 6px; height: 6px; border-radius: 50%; }
+  .footer-dots span:nth-child(1) { background: var(--blue); }
+  .footer-dots span:nth-child(2) { background: var(--red); }
+  .footer-dots span:nth-child(3) { background: var(--yellow); }
+  .footer-dots span:nth-child(4) { background: var(--green); }
+  .footer p { margin-top: 6px; }
+</style>
 </head>
 <body>
-    <div class="header">
-        <h1>SOLAR FORECAST DASHBOARD</h1>
+
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-mark"><span></span><span></span><span></span><span></span></div>
+        <h1>Solar Forecast Studio</h1>
+      </div>
+      <div class="status-pill" id="modelStatusPill">
+        <div class="status-dot" id="modelStatusDot"></div>
+        <span id="modelStatusText">Checking model status…</span>
+      </div>
     </div>
-    
-    <div class="container">
-        <!-- 1. Upload Data -->
-        <div class="accordion">
-            <div class="accordion-header" onclick="toggleAccordion(this)">
-                <span class="accordion-title">1. UPLOAD DATA</span>
-                <span class="accordion-icon">▼</span>
-            </div>
-            <div class="accordion-content active">
-                <div class="accordion-body">
-                    <div class="upload-area" onclick="document.getElementById('csvFile').click()">
-                        <input type="file" id="csvFile" accept=".csv">
-                        <div>Click to upload CSV</div>
-                        <div id="fileName" style="color: #EF8354; margin-top: 0.5rem;"></div>
-                    </div>
-                    <div class="status" id="uploadStatus"></div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 2. Model Configuration -->
-        <div class="accordion">
-            <div class="accordion-header" onclick="toggleAccordion(this)">
-                <span class="accordion-title">2. MODEL CONFIGURATION</span>
-                <span class="accordion-icon">▼</span>
-            </div>
-            <div class="accordion-content">
-                <div class="accordion-body">
-                    <div class="form-group">
-                        <label>Select Models to Train:</label>
-                        <div class="checkbox-group">
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="modelVAR" checked>
-                                <label for="modelVAR">VAR</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="modelRF" checked>
-                                <label for="modelRF">Random Forest</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="modelGB" checked>
-                                <label for="modelGB">Gradient Boosting</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="modelLSTM" checked>
-                                <label for="modelLSTM">LSTM</label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="grid-2">
-                        <div class="form-group">
-                            <label>Training End Date</label>
-                            <input type="text" id="trainEnd" value="2017-11-30 10:00:00">
-                        </div>
-                        <div class="form-group">
-                            <label>Test End Date</label>
-                            <input type="text" id="testEnd" value="2017-12-31 23:00:00">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 3. Training -->
-        <div class="accordion">
-            <div class="accordion-header" onclick="toggleAccordion(this)">
-                <span class="accordion-title">3. TRAINING</span>
-                <span class="accordion-icon">▼</span>
-            </div>
-            <div class="accordion-content">
-                <div class="accordion-body">
-                    <div class="note">Wait until selected model(s) training is completed.</div>
-                    <button class="btn" onclick="startTraining()">Start Training</button>
-                    <div class="pixel-loader" id="trainingLoader"></div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="trainingProgress">0%</div>
-                    </div>
-                    <div class="training-checklist">
-                        <div class="checklist-item" id="checkVAR">VAR</div>
-                        <div class="checklist-item" id="checkRF">RF</div>
-                        <div class="checklist-item" id="checkGB">GB</div>
-                        <div class="checklist-item" id="checkLSTM">LSTM</div>
-                    </div>
-                    <div class="logs-box" id="trainingLogs"></div>
-                    <div class="status" id="trainingStatus"></div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 4. Data Overview -->
-        <div class="accordion">
-            <div class="accordion-header" onclick="toggleAccordion(this)">
-                <span class="accordion-title">4. DATA OVERVIEW</span>
-                <span class="accordion-icon">▼</span>
-            </div>
-            <div class="accordion-content">
-                <div class="accordion-body">
-                    <div class="grid-2">
-                        <div class="form-group">
-                            <label>Target</label>
-                            <select id="overviewTarget">
-                                <option value="GHI">GHI</option>
-                                <option value="DHI">DHI</option>
-                                <option value="DNI">DNI</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>View Type</label>
-                            <select id="overviewType">
-                                <option value="raw">Raw</option>
-                                <option value="yearly">Yearly Cycle</option>
-                                <option value="daily">Daily Average</option>
-                                <option value="monthly">Monthly Average</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button class="btn" onclick="fetchDataOverview()">Show Overview</button>
-                    <div class="plot-container" id="plotOverview">Upload data to view overview</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 5. Forecast Viewer -->
-        <div class="accordion">
-            <div class="accordion-header" onclick="toggleAccordion(this)">
-                <span class="accordion-title">5. FORECAST VIEWER</span>
-                <span class="accordion-icon">▼</span>
-            </div>
-            <div class="accordion-content">
-                <div class="accordion-body">
-                    <div class="grid-3">
-                        <div class="form-group">
-                            <label>Date</label>
-                            <input type="date" id="forecastDate" value="2017-11-30">
-                        </div>
-                        <div class="form-group">
-                            <label>Window</label>
-                            <select id="forecastWindow">
-                                <option value="1">1 hour</option>
-                                <option value="2">2 hours</option>
-                                <option value="6">6 hours</option>
-                                <option value="12">12 hours</option>
-                                <option value="24">24 hours</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Target</label>
-                            <select id="forecastTarget">
-                                <option value="GHI">GHI</option>
-                                <option value="DHI">DHI</option>
-                                <option value="DNI">DNI</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button class="btn" onclick="generateForecast()">Generate Forecast</button>
-                    <div class="plot-container" id="plotForecast">Complete training to generate forecast</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 6. GHI-DHI-DNI Comparison -->
-        <div class="accordion">
-            <div class="accordion-header" onclick="toggleAccordion(this)">
-                <span class="accordion-title">6. GHI–DHI–DNI COMPARISON</span>
-                <span class="accordion-icon">▼</span>
-            </div>
-            <div class="accordion-content">
-                <div class="accordion-body">
-                    <div class="grid-2">
-                        <div class="form-group">
-                            <label>Date</label>
-                            <input type="date" id="comparisonDate" value="2017-11-30">
-                        </div>
-                        <div class="form-group">
-                            <label>Target</label>
-                            <select id="comparisonTarget">
-                                <option value="GHI">GHI</option>
-                                <option value="DHI">DHI</option>
-                                <option value="DNI">DNI</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button class="btn" onclick="fetchComparison()">Show Comparison</button>
-                    <div class="plot-container" id="plotComparison">Complete training to compare models</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 7. Training Summary -->
-        <div class="accordion">
-            <div class="accordion-header" onclick="toggleAccordion(this)">
-                <span class="accordion-title">7. TRAINING SUMMARY</span>
-                <span class="accordion-icon">▼</span>
-            </div>
-            <div class="accordion-content">
-                <div class="accordion-body">
-                    <button class="btn" onclick="fetchPerformance()">Show Performance</button>
-                    <div class="plot-container" id="plotPerformance">Complete training to view metrics</div>
-                </div>
-            </div>
-        </div>
+  </div>
+
+  <div class="container">
+
+    <div class="quickstats" id="quickStats">
+      <div class="quickstats-head">Model performance (RMSE / MAE)</div>
+      <table class="quickstats-table">
+        <thead><tr><th>Model</th><th>Target</th><th>RMSE</th><th>MAE</th></tr></thead>
+        <tbody id="quickStatsBody"></tbody>
+      </table>
     </div>
-    
-    <script>
-        let trainingInterval = null;
-        
-        function toggleAccordion(header) {
-            const content = header.nextElementSibling;
-            const icon = header.querySelector('.accordion-icon');
-            content.classList.toggle('active');
-            icon.textContent = content.classList.contains('active') ? '▼' : '▶';
-        }
-        
-        document.getElementById('csvFile').addEventListener('change', async function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            document.getElementById('fileName').textContent = file.name;
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            try {
-                const response = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await response.json();
-                showStatus('uploadStatus', data.success ? data.message : data.error, data.success ? 'success' : 'error');
-            } catch (error) {
-                showStatus('uploadStatus', 'Upload failed: ' + error.message, 'error');
-            }
+
+    <!-- ============ PIPELINE CANVAS ============ -->
+    <div class="canvas-card">
+      <div class="canvas-label">Pipeline — click a stage</div>
+
+      <!-- Desktop DAG: 4 columns, left to right dependency flow -->
+      <div class="dag-wrap desktop">
+        <svg class="dag-svg" viewBox="0 0 900 400" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--line)"></path>
+            </marker>
+          </defs>
+          <path marker-end="url(#arrow)" d="M160,200 C210,200 210,120 235,110"></path>
+          <path marker-end="url(#arrow)" d="M160,200 C210,200 210,290 235,300"></path>
+          <path marker-end="url(#arrow)" d="M385,110 C430,110 430,145 465,150"></path>
+          <path marker-end="url(#arrow)" d="M655,150 C685,150 685,75 715,70"></path>
+          <path marker-end="url(#arrow)" d="M655,200 C685,200 685,200 715,200"></path>
+          <path marker-end="url(#arrow)" d="M655,250 C685,250 685,325 715,330"></path>
+        </svg>
+
+        <div class="node" data-stage="upload" onclick="selectStage('upload')" style="left:10%; top:50%; width:130px; height:64px;">
+          Upload data<span class="node-sub">CSV source</span>
+        </div>
+        <div class="node" data-stage="configure" onclick="selectStage('configure')" style="left:34.4%; top:27.5%; width:140px; height:64px;">
+          Configure<span class="node-sub">Models · dates</span>
+        </div>
+        <div class="node" data-stage="overview" onclick="selectStage('overview')" style="left:34.4%; top:75%; width:140px; height:64px;">
+          Data overview<span class="node-sub">Raw signal</span>
+        </div>
+        <div class="node train-node" data-stage="train" onclick="selectStage('train')" style="left:62.2%; top:50%; width:180px; height:200px;">
+          Train
+          <div class="train-chips">
+            <span class="train-chip VAR" id="chipVAR">VAR</span>
+            <span class="train-chip RF" id="chipRF">RF</span>
+            <span class="train-chip GB" id="chipGB">GB</span>
+            <span class="train-chip LSTM" id="chipLSTM">LSTM</span>
+          </div>
+        </div>
+        <div class="node" data-stage="forecast" onclick="selectStage('forecast')" style="left:88.9%; top:17.5%; width:160px; height:56px;">Forecast</div>
+        <div class="node" data-stage="compare" onclick="selectStage('compare')" style="left:88.9%; top:50%; width:160px; height:56px;">Compare</div>
+        <div class="node" data-stage="summary" onclick="selectStage('summary')" style="left:88.9%; top:82.5%; width:160px; height:56px;">Summary</div>
+      </div>
+
+      <!-- Mobile DAG: top to bottom, same dependency structure -->
+      <div class="dag-wrap mobile">
+        <svg class="dag-svg" viewBox="0 0 400 860" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <marker id="arrowM" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--line)"></path>
+            </marker>
+          </defs>
+          <path marker-end="url(#arrowM)" d="M200,80 C200,110 130,110 110,140"></path>
+          <path marker-end="url(#arrowM)" d="M200,80 C200,110 270,110 290,140"></path>
+          <path marker-end="url(#arrowM)" d="M110,200 C110,225 150,225 165,255"></path>
+          <path marker-end="url(#arrowM)" d="M290,200 C290,225 250,225 235,255"></path>
+          <path marker-end="url(#arrowM)" d="M200,425 C200,455 200,460 200,490"></path>
+          <path marker-end="url(#arrowM)" d="M200,550 C200,565 200,565 200,580"></path>
+          <path marker-end="url(#arrowM)" d="M200,640 C200,655 200,655 200,670"></path>
+        </svg>
+        <div class="node" data-stage="upload" onclick="selectStage('upload')" style="left:50%; top:5.8%; width:190px; height:60px;">Upload data<span class="node-sub">CSV source</span></div>
+        <div class="node" data-stage="configure" onclick="selectStage('configure')" style="left:27.5%; top:19.7%; width:150px; height:60px;">Configure<span class="node-sub">Models · dates</span></div>
+        <div class="node" data-stage="overview" onclick="selectStage('overview')" style="left:72.5%; top:19.7%; width:150px; height:60px;">Overview</div>
+        <div class="node train-node" data-stage="train" onclick="selectStage('train')" style="left:50%; top:39.5%; width:300px; height:170px;">
+          Train
+          <div class="train-chips">
+            <span class="train-chip VAR" id="chipVAR-m">VAR</span>
+            <span class="train-chip RF" id="chipRF-m">RF</span>
+            <span class="train-chip GB" id="chipGB-m">GB</span>
+            <span class="train-chip LSTM" id="chipLSTM-m">LSTM</span>
+          </div>
+        </div>
+        <div class="node" data-stage="forecast" onclick="selectStage('forecast')" style="left:50%; top:60.5%; width:220px; height:56px;">Forecast</div>
+        <div class="node" data-stage="compare" onclick="selectStage('compare')" style="left:50%; top:70.9%; width:220px; height:56px;">Compare</div>
+        <div class="node" data-stage="summary" onclick="selectStage('summary')" style="left:50%; top:81.4%; width:220px; height:56px;">Summary</div>
+      </div>
+    </div>
+
+    <!-- ============ STAGE DETAIL PANEL ============ -->
+    <div class="panel-card">
+      <div class="panel-head"><div class="panel-head-dot" id="panelDot"></div><h2 id="panelTitle">Upload data</h2></div>
+      <div class="panel-body">
+
+        <div class="stage-panel" id="panel-upload">
+          <div class="note" id="uploadHint">Pretrained models are already loaded — you only need this if you want to retrain on new data.</div>
+          <div class="upload-area" onclick="document.getElementById('csvFile').click()">
+            <input type="file" id="csvFile" accept=".csv">
+            <div class="upload-title">Click to upload a CSV</div>
+            <div class="upload-sub" id="fileName">NSRDB-format solar irradiance data</div>
+          </div>
+          <div class="status" id="uploadStatus"></div>
+        </div>
+
+        <div class="stage-panel" id="panel-configure">
+          <div class="form-group">
+            <label>Models to train</label>
+            <div class="checkbox-group">
+              <div class="checkbox-item"><input type="checkbox" id="modelVAR" checked><label for="modelVAR">VAR</label></div>
+              <div class="checkbox-item"><input type="checkbox" id="modelRF" checked><label for="modelRF">Random Forest</label></div>
+              <div class="checkbox-item"><input type="checkbox" id="modelGB" checked><label for="modelGB">Gradient Boosting</label></div>
+              <div class="checkbox-item"><input type="checkbox" id="modelLSTM" checked><label for="modelLSTM">LSTM</label></div>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group"><label>Training end date</label><input type="text" id="trainEnd" value="2017-11-30 10:00:00"></div>
+            <div class="form-group"><label>Test end date</label><input type="text" id="testEnd" value="2017-12-31 23:00:00"></div>
+          </div>
+        </div>
+
+        <div class="stage-panel" id="panel-train">
+          <div class="note">Training runs in the background. This can take a few minutes — the rest of the app stays usable while it runs.</div>
+          <button class="btn" onclick="startTraining()">Start training</button>
+          <div class="dot-loader" id="trainingLoader"><span></span><span></span><span></span><span></span></div>
+          <div class="progress-bar"><div class="progress-fill" id="trainingProgress"></div></div>
+          <div class="logs-box" id="trainingLogs"></div>
+          <div class="status" id="trainingStatus"></div>
+        </div>
+
+        <div class="stage-panel" id="panel-overview">
+          <div class="grid-2">
+            <div class="form-group"><label>Target</label><select id="overviewTarget"><option value="GHI">GHI</option><option value="DHI">DHI</option><option value="DNI">DNI</option></select></div>
+            <div class="form-group">
+              <label>View</label>
+              <select id="overviewType">
+                <option value="raw">Raw</option><option value="yearly">Yearly cycle</option>
+                <option value="daily">Daily average</option><option value="monthly">Monthly average</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn" onclick="fetchDataOverview()">Show overview</button>
+          <div class="plot-container" id="plotOverview" style="margin-top:14px">Select a target and view, then show the overview.</div>
+        </div>
+
+        <div class="stage-panel" id="panel-forecast">
+          <div class="grid-3">
+            <div class="form-group"><label>Date</label><input type="date" id="forecastDate" value="2017-11-30"></div>
+            <div class="form-group">
+              <label>Window</label>
+              <select id="forecastWindow">
+                <option value="1">1 hour</option><option value="2">2 hours</option>
+                <option value="6">6 hours</option><option value="12">12 hours</option><option value="24">24 hours</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Target</label><select id="forecastTarget"><option value="GHI">GHI</option><option value="DHI">DHI</option><option value="DNI">DNI</option></select></div>
+          </div>
+          <button class="btn" onclick="generateForecast()">Generate forecast</button>
+          <div class="plot-container" id="plotForecast" style="margin-top:14px">Pick a date and window, then generate a forecast.</div>
+        </div>
+
+        <div class="stage-panel" id="panel-compare">
+          <div class="grid-2">
+            <div class="form-group"><label>Date</label><input type="date" id="comparisonDate" value="2017-11-30"></div>
+            <div class="form-group"><label>Target</label><select id="comparisonTarget"><option value="GHI">GHI</option><option value="DHI">DHI</option><option value="DNI">DNI</option></select></div>
+          </div>
+          <button class="btn" onclick="fetchComparison()">Show comparison</button>
+          <div class="plot-container" id="plotComparison" style="margin-top:14px">Pick a date to compare model predictions.</div>
+        </div>
+
+        <div class="stage-panel" id="panel-summary">
+          <button class="btn" onclick="fetchPerformance()">Show performance</button>
+          <div class="plot-container" id="plotPerformance" style="margin-top:14px">Show the RMSE/MAE comparison across models.</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="footer">
+    <div class="footer-dots"><span></span><span></span><span></span><span></span></div>
+    <p>See the <a href="https://colab.research.google.com/drive/1Qi1ARL04-3nZ__Uy3vhhLI_GqmkFg2Dv?usp=sharing" target="_blank">data processing notebook</a> for details on the preprocessing pipeline.</p>
+    <p>Always check the year of your CSV before entering date inputs above.</p>
+    <p>Datasets are available from the <a href="https://nsrdb.nrel.gov/" target="_blank">NSRDB</a>.</p>
+  </footer>
+
+<script>
+  let trainingInterval = null;
+  const STAGE_TITLES = {
+    upload: 'Upload data', configure: 'Configure', train: 'Train models',
+    overview: 'Data overview', forecast: 'Forecast viewer',
+    compare: 'GHI – DHI – DNI comparison', summary: 'Training summary'
+  };
+
+  function selectStage(stage) {
+    document.querySelectorAll('[data-stage]').forEach(n => n.classList.toggle('active', n.dataset.stage === stage));
+    document.querySelectorAll('.stage-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + stage));
+    document.getElementById('panelTitle').textContent = STAGE_TITLES[stage] || stage;
+  }
+
+  function showStatus(elementId, message, type) {
+    const el = document.getElementById(elementId);
+    el.textContent = message;
+    el.className = `status ${type} show`;
+    setTimeout(() => el.classList.remove('show'), 5000);
+  }
+
+  async function checkModelStatus() {
+    try {
+      const res = await fetch('/api/model_info');
+      const data = await res.json();
+      const dot = document.getElementById('modelStatusDot');
+      const text = document.getElementById('modelStatusText');
+
+      if (data.pretrained_loaded) {
+        dot.className = 'status-dot on';
+        text.textContent = 'Pretrained models loaded';
+        renderQuickStats(data.metrics);
+        ['VAR', 'RF', 'GB', 'LSTM'].forEach(m => {
+          const c1 = document.getElementById('chip' + m); const c2 = document.getElementById('chip' + m + '-m');
+          [c1, c2].forEach(c => { if (c) c.classList.add('done'); });
         });
-        
-        async function startTraining() {
-            const models = [];
-            if (document.getElementById('modelVAR').checked) models.push('VAR');
-            if (document.getElementById('modelRF').checked) models.push('RF');
-            if (document.getElementById('modelGB').checked) models.push('GB');
-            if (document.getElementById('modelLSTM').checked) models.push('LSTM');
-            
-            if (models.length === 0) {
-                showStatus('trainingStatus', 'Select at least one model', 'error');
-                return;
-            }
-            
-            document.getElementById('trainingLoader').classList.add('show');
-            document.getElementById('trainingLogs').innerHTML = '<div class="log-entry">Training started...</div>';
-            
-            ['VAR', 'RF', 'GB', 'LSTM'].forEach(m => {
-                const elem = document.getElementById('check' + m);
-                elem.className = 'checklist-item';
-                elem.textContent = m;
-            });
-            
-            startProgressPolling();
-            
-            try {
-                const response = await fetch('/api/train', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        models: models,
-                        trainEnd: document.getElementById('trainEnd').value,
-                        testEnd: document.getElementById('testEnd').value
-                    })
-                });
-                const data = await response.json();
-                document.getElementById('trainingLoader').classList.remove('show');
-                showStatus('trainingStatus', data.success ? 'Training Complete' : data.error, data.success ? 'success' : 'error');
-                if (trainingInterval) clearInterval(trainingInterval);
-            } catch (error) {
-                document.getElementById('trainingLoader').classList.remove('show');
-                showStatus('trainingStatus', 'Training failed: ' + error.message, 'error');
-                if (trainingInterval) clearInterval(trainingInterval);
-            }
-        }
-        
-        function startProgressPolling() {
-            trainingInterval = setInterval(async () => {
-                try {
-                    const response = await fetch('/api/train_status');
-                    const data = await response.json();
-                    
-                    let completed = 0;
-                    Object.entries(data.progress).forEach(([model, done]) => {
-                        const elem = document.getElementById('check' + model);
-                        if (done) {
-                            elem.className = 'checklist-item complete';
-                            elem.textContent = model;
-                            completed++;
-                        } else {
-                            elem.className = 'checklist-item training';
-                        }
-                    });
-                    
-                    const progress = (completed / 4) * 100;
-                    const progressFill = document.getElementById('trainingProgress');
-                    progressFill.style.width = progress + '%';
-                    progressFill.textContent = Math.round(progress) + '%';
-                    
-                    const logsRes = await fetch('/api/train_logs');
-                    const logsData = await logsRes.json();
-                    if (logsData.logs && logsData.logs.length > 0) {
-                        document.getElementById('trainingLogs').innerHTML = logsData.logs.map(l => 
-                            `<div class="log-entry">${l}</div>`
-                        ).join('');
-                    }
-                } catch (error) {
-                    console.error('Status poll failed:', error);
-                }
-            }, 2000);
-        }
-        
-        async function fetchDataOverview() {
-            const target = document.getElementById('overviewTarget').value;
-            const type = document.getElementById('overviewType').value;
-            
-            document.getElementById('plotOverview').innerHTML = 'Loading...';
-            
-            try {
-                const response = await fetch(`/api/data_overview?target=${target}&type=${type}`);
-                const data = await response.json();
-                if (data.success) {
-                    document.getElementById('plotOverview').innerHTML = `<img src="data:image/png;base64,${data.image}">`;
-                } else {
-                    document.getElementById('plotOverview').innerHTML = data.error;
-                }
-            } catch (error) {
-                document.getElementById('plotOverview').innerHTML = 'Error: ' + error.message;
-            }
-        }
-        
-        async function generateForecast() {
-            const target = document.getElementById('forecastTarget').value;
-            const date = document.getElementById('forecastDate').value;
-            const window = document.getElementById('forecastWindow').value;
-            
-            document.getElementById('plotForecast').innerHTML = 'Loading...';
-            
-            try {
-                const response = await fetch(`/api/forecast?target=${target}&date=${date}&window=${window}`);
-                const data = await response.json();
-                if (data.success) {
-                    document.getElementById('plotForecast').innerHTML = `<img src="data:image/png;base64,${data.image}">`;
-                } else {
-                    document.getElementById('plotForecast').innerHTML = data.error;
-                }
-            } catch (error) {
-                document.getElementById('plotForecast').innerHTML = 'Error: ' + error.message;
-            }
-        }
-        
-        async function fetchComparison() {
-            const target = document.getElementById('comparisonTarget').value;
-            const date = document.getElementById('comparisonDate').value;
-            
-            document.getElementById('plotComparison').innerHTML = 'Loading...';
-            
-            try {
-                const response = await fetch(`/api/model_comparison?target=${target}&date=${date}`);
-                const data = await response.json();
-                if (data.success) {
-                    document.getElementById('plotComparison').innerHTML = `<img src="data:image/png;base64,${data.image}">`;
-                } else {
-                    document.getElementById('plotComparison').innerHTML = data.error;
-                }
-            } catch (error) {
-                document.getElementById('plotComparison').innerHTML = 'Error: ' + error.message;
-            }
-        }
-        
-        async function fetchPerformance() {
-            document.getElementById('plotPerformance').innerHTML = 'Loading...';
-            
-            try {
-                const response = await fetch('/api/get_performance_comparison');
-                const data = await response.json();
-                if (data.success) {
-                    document.getElementById('plotPerformance').innerHTML = `<img src="data:image/png;base64,${data.image}">`;
-                } else {
-                    document.getElementById('plotPerformance').innerHTML = data.error;
-                }
-            } catch (error) {
-                document.getElementById('plotPerformance').innerHTML = 'Error: ' + error.message;
-            }
-        }
-        
-        function showStatus(elementId, message, type) {
-            const element = document.getElementById(elementId);
-            element.textContent = message;
-            element.className = `status ${type} show`;
-            setTimeout(() => element.classList.remove('show'), 5000);
-        }
-    </script>
-    <!-- =======================
-     CUSTOM FOOTER SECTION
-    ======================= -->
-    <style>
-        .footer {
-            background-color: #2D3142;
-            padding: 20px 0;
-            margin-top: 60px;
-            text-align: center;
-            color: #BFC0C0;
-            font-size: 14px;
-            border-top: 1px solid #4F5D75;
-            width: 100%;
+        selectStage('forecast');
+      } else {
+        dot.className = 'status-dot off';
+        text.textContent = 'No models loaded — upload data and train';
+        document.getElementById('uploadHint').textContent =
+          'No pretrained models found. Upload a CSV and run training to get started.';
+        selectStage('upload');
+      }
+    } catch (e) {
+      document.getElementById('modelStatusText').textContent = 'Status unavailable';
+    }
+  }
+
+  function renderQuickStats(metrics) {
+    if (!metrics || Object.keys(metrics).length === 0) return;
+    const body = document.getElementById('quickStatsBody');
+    body.innerHTML = '';
+    Object.entries(metrics).forEach(([key, m]) => {
+      const [model, target] = key.split('_');
+      const row = document.createElement('tr');
+      row.innerHTML = `<td><span class="model-chip ${model}">${model}</span></td><td>${target}</td><td class="mono">${m.RMSE.toFixed(2)}</td><td class="mono">${m.MAE.toFixed(2)}</td>`;
+      body.appendChild(row);
+    });
+    document.getElementById('quickStats').classList.add('show');
+  }
+
+  document.getElementById('csvFile').addEventListener('change', async function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    document.getElementById('fileName').textContent = file.name;
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const response = await fetch('/api/upload', { method: 'POST', body: formData });
+      const data = await response.json();
+      showStatus('uploadStatus', data.success ? data.message : data.error, data.success ? 'success' : 'error');
+    } catch (error) {
+      showStatus('uploadStatus', 'Upload failed: ' + error.message, 'error');
+    }
+  });
+
+  async function startTraining() {
+    const models = [];
+    if (document.getElementById('modelVAR').checked) models.push('VAR');
+    if (document.getElementById('modelRF').checked) models.push('RF');
+    if (document.getElementById('modelGB').checked) models.push('GB');
+    if (document.getElementById('modelLSTM').checked) models.push('LSTM');
+
+    if (models.length === 0) {
+      showStatus('trainingStatus', 'Select at least one model', 'error');
+      return;
+    }
+
+    selectStage('train');
+    document.getElementById('trainingLoader').classList.add('show');
+    document.getElementById('trainingLogs').innerHTML = '<div class="log-entry">Training started…</div>';
+    ['VAR', 'RF', 'GB', 'LSTM'].forEach(m => {
+      [document.getElementById('chip' + m), document.getElementById('chip' + m + '-m')].forEach(c => {
+        if (c) c.className = 'train-chip ' + m;
+      });
+    });
+
+    startProgressPolling();
+
+    try {
+      const response = await fetch('/api/train', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          models: models,
+          trainEnd: document.getElementById('trainEnd').value,
+          testEnd: document.getElementById('testEnd').value
+        })
+      });
+      const data = await response.json();
+      document.getElementById('trainingLoader').classList.remove('show');
+      showStatus('trainingStatus', data.success ? 'Training started' : data.error, data.success ? 'success' : 'error');
+    } catch (error) {
+      document.getElementById('trainingLoader').classList.remove('show');
+      showStatus('trainingStatus', 'Training failed: ' + error.message, 'error');
+      if (trainingInterval) clearInterval(trainingInterval);
+    }
+  }
+
+  function startProgressPolling() {
+    if (trainingInterval) clearInterval(trainingInterval);
+    trainingInterval = setInterval(async () => {
+      try {
+        const response = await fetch('/api/train_status');
+        const data = await response.json();
+
+        let completed = 0;
+        Object.entries(data.progress).forEach(([model, done]) => {
+          [document.getElementById('chip' + model), document.getElementById('chip' + model + '-m')].forEach(c => {
+            if (!c) return;
+            if (done) { c.className = 'train-chip ' + model + ' done'; completed++; }
+            else { c.className = 'train-chip ' + model + ' busy'; }
+          });
+        });
+
+        document.getElementById('trainingProgress').style.width = ((completed / 4) * 100) + '%';
+
+        const logsRes = await fetch('/api/train_logs');
+        const logsData = await logsRes.json();
+        if (logsData.logs && logsData.logs.length > 0) {
+          document.getElementById('trainingLogs').innerHTML =
+            logsData.logs.map(l => `<div class="log-entry">${l}</div>`).join('');
         }
 
-        /* Minimal pixel-art icons (CSS only) */
-        .pixel-art-container {
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: center;
-            gap: 20px;
+        if (data.status === 'completed' || data.status === 'failed') {
+          clearInterval(trainingInterval);
+          document.getElementById('trainingLoader').classList.remove('show');
+          checkModelStatus();
         }
+      } catch (error) {
+        console.error('Status poll failed:', error);
+      }
+    }, 2000);
+  }
 
-        .pixel-sun, .pixel-cloud {
-            width: 22px;
-            height: 22px;
-            image-rendering: pixelated;
-        }
+  async function fetchDataOverview() {
+    const target = document.getElementById('overviewTarget').value;
+    const type = document.getElementById('overviewType').value;
+    document.getElementById('plotOverview').innerHTML = 'Loading…';
+    try {
+      const response = await fetch(`/api/data_overview?target=${target}&type=${type}`);
+      const data = await response.json();
+      document.getElementById('plotOverview').innerHTML = data.success ? `<img src="data:image/png;base64,${data.image}">` : data.error;
+    } catch (error) { document.getElementById('plotOverview').innerHTML = 'Error: ' + error.message; }
+  }
 
-        .pixel-sun {
-            background: radial-gradient(#d9df1b 40%, #4F5D75 42%);
-        }
+  async function generateForecast() {
+    const target = document.getElementById('forecastTarget').value;
+    const date = document.getElementById('forecastDate').value;
+    const win = document.getElementById('forecastWindow').value;
+    document.getElementById('plotForecast').innerHTML = 'Loading…';
+    try {
+      const response = await fetch(`/api/forecast?target=${target}&date=${date}&window=${win}`);
+      const data = await response.json();
+      document.getElementById('plotForecast').innerHTML = data.success ? `<img src="data:image/png;base64,${data.image}">` : data.error;
+    } catch (error) { document.getElementById('plotForecast').innerHTML = 'Error: ' + error.message; }
+  }
 
-        .pixel-cloud {
-            background: linear-gradient(#FFFFFF 50%, #BFC0C0 50%);
-        }
+  async function fetchComparison() {
+    const target = document.getElementById('comparisonTarget').value;
+    const date = document.getElementById('comparisonDate').value;
+    document.getElementById('plotComparison').innerHTML = 'Loading…';
+    try {
+      const response = await fetch(`/api/model_comparison?target=${target}&date=${date}`);
+      const data = await response.json();
+      document.getElementById('plotComparison').innerHTML = data.success ? `<img src="data:image/png;base64,${data.image}">` : data.error;
+    } catch (error) { document.getElementById('plotComparison').innerHTML = 'Error: ' + error.message; }
+  }
 
-        .footer a {
-            color: #d9df1b;
-            text-decoration: none;
-            font-weight: bold;
-        }
+  async function fetchPerformance() {
+    document.getElementById('plotPerformance').innerHTML = 'Loading…';
+    try {
+      const response = await fetch('/api/get_performance_comparison');
+      const data = await response.json();
+      document.getElementById('plotPerformance').innerHTML = data.success ? `<img src="data:image/png;base64,${data.image}">` : data.error;
+    } catch (error) { document.getElementById('plotPerformance').innerHTML = 'Error: ' + error.message; }
+  }
 
-        .footer a:hover {
-            text-decoration: underline;
-        }
-    </style>
-
-    <footer class="footer">
-        <div class="pixel-art-container">
-            <div class="pixel-sun"></div>
-            <div class="pixel-cloud"></div>
-        </div>
-
-        <div>
-            To know more about data processing, see the 
-            <a href="https://colab.research.google.com/drive/1Qi1ARL04-3nZ__Uy3vhhLI_GqmkFg2Dv?usp=sharing" target="_blank">notebook</a>.
-        </div>
-
-        <div style="margin-top: 6px;">
-            Always verify the **year** of your CSV file before entering any date input.
-        </div>
-
-        <div style="margin-top: 6px;">
-            Download your own dataset from the NSRDB website and analyze it using this tool.
-        </div>
-    </footer>
-
+  checkModelStatus();
+</script>
 </body>
 </html>
