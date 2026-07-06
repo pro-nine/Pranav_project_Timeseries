@@ -1,0 +1,31 @@
+{
+  "targets": [
+    "GHI",
+    "DHI",
+    "DNI"
+  ],
+  "clearsky_map": {
+    "GHI": "Clearsky GHI",
+    "DHI": "Clearsky DHI",
+    "DNI": "Clearsky DNI"
+  },
+  "feature_order": [
+    "kt_GHI_lag1",
+    "kt_GHI_lag3",
+    "kt_GHI_rolling3",
+    "kt_DHI_lag1",
+    "kt_DHI_lag3",
+    "kt_DHI_rolling3",
+    "kt_DNI_lag1",
+    "kt_DNI_lag3",
+    "kt_DNI_rolling3",
+    "doy_sin",
+    "doy_cos",
+    "hour_sin",
+    "hour_cos"
+  ],
+  "lstm_window": 8,
+  "kt_clip": 1.5,
+  "clearsky_floor": 10.0,
+  "s": 96
+}
